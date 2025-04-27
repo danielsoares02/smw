@@ -133,7 +133,56 @@ void nanotime_sleep(uint64_t nsec_count);
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <Windows.h>
+// #include <windows.h>
+
+// Em vez de incluir windows.h e psapi.h e causar conflito com raylib
+// declaramos as funções e tipos aqui
+#ifndef MINIMAL_WINDOWS_DECLARATIONS_H
+#define MINIMAL_WINDOWS_DECLARATIONS_H
+
+#include <stdint.h> // Para int64_t
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Tipos
+typedef int64_t LONGLONG;
+
+typedef struct {
+    LONGLONG QuadPart;
+} LARGE_INTEGER;
+
+typedef void* HANDLE;
+typedef uint32_t DWORD;
+typedef int BOOL;
+typedef void VOID;
+typedef int64_t LONG64;
+typedef LONG64 *PLONG64;
+
+// Constantes
+#define INFINITE 0xFFFFFFFF
+#define WAIT_OBJECT_0 0x00000000L
+
+// Funções (declarações)
+BOOL QueryPerformanceCounter(LARGE_INTEGER *lpPerformanceCount);
+BOOL QueryPerformanceFrequency(LARGE_INTEGER *lpFrequency);
+DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable);
+HANDLE CreateWaitableTimerA(void *lpTimerAttributes, BOOL bManualReset, const char *lpTimerName);
+BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER *lpDueTime, LONGLONG lPeriod,
+                      void (*pfnCompletionRoutine)(void*, DWORD), void *lpArgToCompletionRoutine, BOOL fResume);
+DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds);
+BOOL CloseHandle(HANDLE hObject);
+
+#define CreateWaitableTimer CreateWaitableTimerA
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // MINIMAL_WINDOWS_DECLARATIONS_H
+
+
 #define nanotime_yield() YieldProcessor()
 #define NANOTIME_YIELD_IMPLEMENTED
 #elif (defined(__unix__) || defined(__APPLE__)) && defined(_POSIX_VERSION) && (_POSIX_VERSION >= 200112L)
@@ -214,7 +263,7 @@ bool nanotime_step(nanotime_step_data* const stepper);
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <Windows.h>
+// #include <windows.h>
 
 #ifndef NANOTIME_NOW_IMPLEMENTED
 uint64_t nanotime_now() {
@@ -273,7 +322,7 @@ void nanotime_sleep(uint64_t nsec_count) {
 		 * with no actual non-CPU-hogging delay. The time-slice-yield
 		 * behavior is specified in Microsoft's Windows documentation.
 		 */
-		SleepEx(0UL, FALSE);
+		SleepEx(0UL, false);
 	}
 	else {
 		HANDLE timer = NULL;
@@ -290,14 +339,14 @@ void nanotime_sleep(uint64_t nsec_count) {
 			 */
 			(timer = CreateWaitableTimerEx(NULL, NULL, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS)) == NULL &&
 #endif
-			(timer = CreateWaitableTimer(NULL, TRUE, NULL)) == NULL
+			(timer = CreateWaitableTimer(NULL, true, NULL)) == NULL
 		) {
 			return;
 		}
 
 		dueTime.QuadPart = -(LONGLONG)(nsec_count / UINT64_C(100));
 
-		SetWaitableTimer(timer, &dueTime, 0L, NULL, NULL, FALSE);
+		SetWaitableTimer(timer, &dueTime, 0L, NULL, NULL, false);
 		WaitForSingleObject(timer, INFINITE);
 
 		CloseHandle(timer);

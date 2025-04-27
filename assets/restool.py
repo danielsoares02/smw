@@ -4,6 +4,7 @@ import sys
 
 parser = argparse.ArgumentParser(description='Resource tool used to build smw_assets.dat', allow_abbrev=False)
 parser.add_argument('-r', '--rom', nargs='?', metavar='ROM')
+parser.add_argument('-o', '--dat-path', nargs='?', metavar='dat_path')
 parser.add_argument('--extract-from-rom', '-e', action='store_true', help='Extract assets from the ROM')
 parser.add_argument('--no-hash-check', '-f', action='store_true', help='Bypass the hash check (needed for Lunar Magic roms)')
 parser.add_argument('--no-include-rom', dest='include_rom', action='store_false', help='Don''t include the ROM in the assets file for verification')

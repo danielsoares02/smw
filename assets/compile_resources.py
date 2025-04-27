@@ -840,7 +840,7 @@ def print_all(args):
   add_asset_uint8('kLmFeatures', lm_feat.serialize())
 
 
-def write_assets_to_file(print_header = False):
+def write_assets_to_file(print_header = False, dat_path = ""):
   key_sig = b''
   all_data = []
   if print_header:
@@ -887,11 +887,12 @@ extern const uint8 *FindPtrInAsset(int asset, uint32 addr);
       file_data += b'\0'
     file_data += v
 
-  open('smw_assets.dat', 'wb').write(file_data)
+  os.makedirs(dat_path, exist_ok=True)
+  open(os.path.join(dat_path,'smw_assets.dat'), 'wb').write(file_data)
 
 def main(args):
   print_all(args)
-  write_assets_to_file(args.print_assets_header)
+  write_assets_to_file(args.print_assets_header, args.dat_path)
 
 if __name__ == "__main__":
   ROM = util.load_rom(sys.argv[1] if len(sys.argv) >= 2 else None)
